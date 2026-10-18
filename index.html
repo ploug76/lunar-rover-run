@@ -155,4 +155,7 @@ let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;ui()})
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
 level=startLv;build();bug={wx:0,y:0,sp:0,air:false,inv:0};
 let last=performance.now(),acc=0;function loop(ts){acc+=Math.min(100,ts-last);last=ts;while(acc>=16.67){if(!paused){update();if(state=='title')cam+=1.5}acc-=16.67}draw();requestAnimationFrame(loop)}ui();requestAnimationFrame(loop);
+
+// auto-pause when the app is backgrounded
+document.addEventListener('visibilitychange',()=>{const b=document.getElementById('pause');if(document.hidden&&!paused&&b&&getComputedStyle(b).display!='none')b.click()});
 </script></body></html>
