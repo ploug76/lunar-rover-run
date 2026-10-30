@@ -17,7 +17,7 @@ canvas{display:block;position:fixed;left:0;top:0;width:100%;height:100%}
 .tb{position:fixed;top:8px;width:44px;height:44px;border-radius:8px;border:3px solid #fff;color:#fff;font-size:20px;display:none;z-index:3;padding:0;background:#3a1c78}
 #pause{right:8px}#mute{right:60px}
 .cb{position:fixed;bottom:16px;display:none;z-index:3;border:4px solid #fff;color:#fff;font:bold 18px "Courier New",monospace;border-radius:50%;padding:0}
-#jump{left:14px;width:96px;height:96px;background:rgba(40,160,255,.75)}#fire{right:14px;width:96px;height:96px;background:rgba(255,80,60,.8)}
+#jump{right:14px;width:96px;height:96px;background:rgba(40,160,255,.75)}#fire{left:14px;width:96px;height:96px;background:rgba(255,80,60,.8)}
 #slow,#fast{width:52px;height:52px;bottom:38px;background:rgba(80,60,140,.75);font-size:20px}#slow{left:calc(50% - 60px)}#fast{left:calc(50% + 8px)}
 #inst{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:none;z-index:4;font:bold 18px "Courier New",monospace;padding:10px 20px;border-radius:8px;border:3px solid #fff;background:#2a8cff;color:#fff}
 #ios{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);display:none;z-index:4;background:#140a2e;color:#fff;padding:6px 12px;border-radius:10px;font-size:13px;text-align:center;width:80vw;border:1px solid #6a5acd}
@@ -84,8 +84,8 @@ function update(){t++;if(msgT>0)msgT--;for(const p of parts){p.x+=p.vx;p.y+=p.vy
  const C=cfg();spd=CL(spd+((keyR?1:0)-(keyL?1:0))*.06+(!keyR&&!keyL?(C.sp-spd)*.02:0),C.sp-1,C.sp+1.3);cam+=spd;bug.wx=cam+BX;secT++;if(bug.inv>0)bug.inv--;if(fireCD>0)fireCD--;
  if(keyJ)jump();if(keyF)fire();
  // buggy vertical
- if(bug.air){bug.vy+=.42;bug.y+=bug.vy;if(bug.y>=0){bug.y=0;if(inCrater(bug.wx,6)){crash('crater');return}bug.air=false;bug.spv+=bug.vy*.5;bug.vy=0;SND.land();burst(SX(bug.wx),GY,6,['#c8c0e0','#9890b8'],.5)}}
- else if(inCrater(bug.wx,6)){crash('crater');return}
+ if(bug.air){bug.vy+=.42;bug.y+=bug.vy;if(bug.y>=0){bug.y=0;if(inCrater(bug.wx,6)){if(rfCrater())return;crash('crater');return}bug.air=false;bug.spv+=bug.vy*.5;bug.vy=0;SND.land();burst(SX(bug.wx),GY,6,['#c8c0e0','#9890b8'],.5)}}
+ else if(inCrater(bug.wx,6)){if(rfCrater())return;crash('crater');return}
  bug.spv+=-bug.sp*.25-bug.spv*.18;bug.sp+=bug.spv;
  // rocks
  for(const r of rocks){if(r.dead)continue;if(Math.abs(r.x-bug.wx)<r.r+22&&-bug.y<r.r*1.15&&bug.inv<=0){crash('rock');return}}
@@ -114,6 +114,9 @@ function update(){t++;if(msgT>0)msgT--;for(const p of parts){p.x+=p.vx;p.y+=p.vy
 function jump(){if(state!='play'||crashT||bug.air)return;bug.air=true;bug.vy=-9.4;SND.jump()}
 function fire(){if(state!='play'||crashT||fireCD>0)return;fireCD=11;const by=bug.y;
  if(shots.filter(s=>!s.up).length<2)shots.push({x:bug.wx+28,y:by-12,vx:spd+9,vy:0,l:30});shots.push({x:bug.wx-4,y:by-34,vx:spd,vy:-11,l:40,up:1});SND.shot()}
+// Oct 30 (Peter): a crater while blinking doesn't count; back the rover up onto solid ground before the crater
+function rfCrater(){const k=inCrater(bug.wx,6);if(!k||bug.inv<=0)return false;let x=k.x-Math.max(50,spd*30),q;while((q=inCrater(x,-12)))x=q.x-30;
+ cam=x-BX;bug.wx=x;bug.y=0;bug.vy=0;bug.air=false;if(!k.rfS){k.rfS=1;bug.inv=Math.max(bug.inv,45)}return true}
 function crash(why){crashT=1;SND.boom();burst(SX(bug.wx),GY+(bug.y-12)*S,40,['#ff5a3a','#ffd34a','#fff','#b088ff'],1.4);say(why=='crater'?'FELL IN A CRATER!':why=='rock'?'CRASHED INTO A ROCK!':'HIT BY A BOMB!',80)}
 function courseClear(){state="clear";clearT=0;lives=Math.min(5,lives+1);score+=1000*level;if(score>best){best=score;localStorage.setItem('lrrBest',best)}SND.clear();ui()}
 function gameOver(){state='over';overT=t;if(score>best){best=score;localStorage.setItem('lrrBest',best)}SND.over();ui()}
